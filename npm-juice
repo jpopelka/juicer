@@ -1,0 +1,78 @@
+#!/bin/bash
+#
+# Metadata Juicer from installed npm packages
+#
+npm_find_archive() {
+        PKG=$1
+
+        CACHE_DIR=$(npm config get cache)
+        PKG_DIR=
+        for D in ${CACHE_DIR}/*; do
+                NAME=$(basename ${D})
+                if [[ "${NAME}" == "${PKG}" ]]; then
+                        PKG_DIR=${D}
+                fi
+        done
+
+        [[ -z "${PKG_DIR}" ]] && exit 1
+
+        RT=
+        P=
+        VERSIONS=$(find ${PKG_DIR} -name 'package.tgz')
+        for V in ${VERSIONS}; do
+                D=$(dirname ${V})
+                RT=${D##*/}
+                P=${V}
+                #msg "analysing version: ${RT}"
+        done
+        echo ${V}
+        return 0
+}
+
+unpack_into() {
+ # $1 = archive, $2 = target directory
+ case "$1" in
+   *.tar??? | *.tgz)
+    tar xf $1 -C $2
+   ;;
+   *.zip)
+    unzip $1 -d $2
+   ;;
+   *)
+    exit 1
+   ;;
+ esac
+}
+
+[[ "$#" -lt "1" ]] && echo '{"metadata": null, "errors": ["No parameter"]}' && exit 1
+
+INFILE=$1
+npm cache add ${INFILE} 1>/dev/null 2>&1
+
+DIR=${INFILE}_metadata
+
+rm -rf ${DIR}
+mkdir -p ${DIR}
+
+NPM_PKG=$(npm_find_archive ${INFILE})
+AR_HASH=$(sha256sum ${NPM_PKG} | cut -d' ' -f1)
+PKG_META=$(dirname ${NPM_PKG})/package/package.json
+
+unpack_into ${NPM_PKG} ${DIR}
+
+FMT="{\"errors\": [], \"metadata\":\n{\"archive\": {\"path\": \"${NPM_PKG}\", \"digest\": \"sha256:${AR_HASH}\"}, \"manifest\": \n"
+FMT="$FMT$(cat ${PKG_META}),\n"
+FMT="$FMT\n"'"files": [\n'
+for FL in $(find ${DIR}/); do
+  if [[ ! -d "$FL" ]]; then
+    #echo "==> Processing ${FL} {"  "}"
+    DGST=$(sha256sum ${FL} | cut -d' ' -f1)
+    TYP=$(file ${FL} | cut -d' ' -f2-)
+    LNG=$((linguist ${FL} 2>/dev/null | awk 1 ORS='\\\\n') || echo "")
+    TRAITS=$(binwalk -B ${FL} | tail -n +4 | sed 's,^\w*\ *\w*\ *,,' | awk 1 ORS='\\\\n')
+    [[ "$TRAITS" = '\n' ]] || TRAITS=""
+    FMT="${FMT}$(printf '{"file": "%s", "digest": "sha256:%s", "type": "%s", "languages": "%s", "traits": "%s"},\n' $(basename ${FL}) "$DGST" "${TYP}" "${LNG}" "${TRAITS}")"
+  fi
+done
+FMT="$(echo $FMT | sed 's/,$//g')\n]\n}}"
+echo -ne $FMT | jq .
