@@ -61,7 +61,7 @@ PKG_META=$(dirname ${NPM_PKG})/package/package.json
 unpack_into ${NPM_PKG} ${DIR}
 
 FMT="{\"errors\": [], \"metadata\":\n{\"archive\": {\"path\": \"${NPM_PKG}\", \"digest\": \"sha256:${AR_HASH}\"}, \"manifest\": \n"
-FMT="$FMT$(cat ${PKG_META}),\n"
+FMT="$FMT$(cat ${PKG_META} | sed 's/\\/\\\\/g'),\n"
 FMT="$FMT\n"'"files": [\n'
 for FL in $(find ${DIR}/); do
   if [[ ! -d "$FL" ]]; then
