@@ -15,17 +15,12 @@ npm_find_archive() {
         done
 
         [[ -z "${PKG_DIR}" ]] && exit 1
-
-        RT=
         P=
         VERSIONS=$(find ${PKG_DIR} -name 'package.tgz')
         for V in ${VERSIONS}; do
-                D=$(dirname ${V})
-                RT=${D##*/}
                 P=${V}
-                #msg "analysing version: ${RT}"
         done
-        echo ${V}
+        echo ${P}
         return 0
 }
 
@@ -65,13 +60,21 @@ FMT="$FMT$(cat ${PKG_META} | sed 's/\\/\\\\/g'),\n"
 FMT="$FMT\n"'"files": [\n'
 for FL in $(find ${DIR}/); do
   if [[ ! -d "$FL" ]]; then
-    #echo "==> Processing ${FL} {"  "}"
     DGST=$(sha256sum ${FL} | cut -d' ' -f1)
     TYP=$(file ${FL} | cut -d' ' -f2-)
+    LNGS="$(linguist ${FL} 2>/dev/null | awk 1 ORS='\\n')"
+    if [[ ! -z "${LNGS}" ]]; then
+      B="{\"sloc\": \"$(echo -ne ${LNGS} | sed -n 's/.* (\(.*\))$/\1/gp')\","
+      B="$B \"type\": \"$(echo -ne ${LNGS} | sed -n 's/^\s*mime type:\ *\(.*\)$/\1/gp')\","
+      B="$B \"language\": \"$(echo -ne ${LNGS} | sed -n 's/^\s*language:\ *\(.*\)$/\1/gp')\"}"
+      LNGS=$B
+    else
+      LNGS=null
+    fi
     LNG=$((linguist ${FL} 2>/dev/null | awk 1 ORS='\\\\n') || echo "")
     TRAITS=$(binwalk -B ${FL} | tail -n +4 | sed 's,^\w*\ *\w*\ *,,' | awk 1 ORS='\\\\n')
     [[ "$TRAITS" = '\n' ]] || TRAITS=""
-    FMT="${FMT}$(printf '{"file": "%s", "digest": "sha256:%s", "type": "%s", "languages": "%s", "traits": "%s"},\n' $(basename ${FL}) "$DGST" "${TYP}" "${LNG}" "${TRAITS}")"
+    FMT="${FMT}$(printf '{"file": "%s", "digest": "sha256:%s", "type": "%s", "languages": %s, "traits": "%s"},\n' $(basename ${FL}) "$DGST" "${TYP}" "${LNGS}" "${TRAITS}")"
   fi
 done
 FMT="$(echo $FMT | sed 's/,$//g')\n]\n}}"
