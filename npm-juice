@@ -3,20 +3,21 @@
 # Metadata Juicer from installed npm packages
 #
 npm_find_archive() {
-        PKG=$1
+	# split package@version into an array
+	PKG_VER=(${1//@/ /})
 
         CACHE_DIR=$(npm config get cache)
         PKG_DIR=
         for D in ${CACHE_DIR}/*; do
                 NAME=$(basename ${D})
-                if [[ "${NAME}" == "${PKG}" ]]; then
+                if [[ "${NAME}" == "${PKG_VER[0]}" ]]; then
                         PKG_DIR=${D}
                 fi
         done
 
         [[ -z "${PKG_DIR}" ]] && exit 1
         P=
-        VERSIONS=$(find ${PKG_DIR} -name 'package.tgz')
+        VERSIONS=$(find ${PKG_DIR}/${PKG_VER[1]} -name 'package.tgz')
         for V in ${VERSIONS}; do
                 P=${V}
         done
