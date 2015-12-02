@@ -79,11 +79,11 @@ for FL in $(find ${DIR}/); do
     FMT="${FMT}$(printf '{"file": "%s", "digest": "sha256:%s", "type": "%s", "languages": %s, "traits": "%s"},\n' $(basename ${FL}) "$DGST" "${TYP}" "${LNGS}" "${TRAITS}")"
   fi
 done
-GDATA='"git": null'
+GDATA='null'
 GIT=$(cat ${PKG_META} | (2>/dev/null jq '.repository.url // .repository'))
 if [[ "$GIT" != "" && "$GIT" != "null" ]]; then
-  GURL=$(echo $GIT | sed -e 's/\.git\"$//' -e 's/^.*:\/\/github\.com\///')
-  GDATA="\"git\": $(gitstats.py -d 14 ${GURL})"
+  GURL=$(echo $GIT | sed -e 's/\.git\"$//' -e 's/\"$//' -e 's/^.*:\/\/github\.com\///')
+  GDATA=$(gitstats.py -d 14 ${GURL})
 fi
-FMT="$(echo $FMT | sed 's/,$//g')\n],\n${GDATA}}}"
+FMT="$(echo $FMT | sed 's/,$//g')\n],\n\"git\":\n${GDATA}}}"
 echo -ne $FMT | jq .
