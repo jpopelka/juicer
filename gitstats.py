@@ -8,7 +8,7 @@ import os
 import github
 import datetime
 
-USER_TOKEN = "6279117780c26df2da7783ee9134343e8b92fbbd"
+USER_TOKEN = os.getenv('GH_TOKEN')
 ISSUE_PROPS = ('created_at', 'closed_at', 'updated_at', 'id', 'pull_request', 'state')
 REPO_PROPS = ('watchers_count', 'forks_count', 'network_count')
 THREE_MONTHS = PRG = ('/', '\\', '-')

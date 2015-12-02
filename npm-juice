@@ -83,7 +83,7 @@ GDATA=
 GIT=$(cat ${PKG_META} | (2>/dev/null jq '.repository.url // .repository'))
 if [[ ! -z "$GIT" ]]; then
   GURL=$(echo $GIT | sed -e 's/\.git\"$//' -e 's/^.*:\/\/github\.com\///')
-  GDATA=", \"git\": $(./gitstats.py -d 14 ${GURL})"
+  GDATA="\"git\": $(./gitstats.py -d 14 ${GURL})"
 fi
-FMT="$(echo $FMT | sed 's/,$//g')\n]\n}${GDATA}}"
+FMT="$(echo $FMT | sed 's/,$//g')\n],\n${GDATA}}}"
 echo -ne $FMT | jq .
