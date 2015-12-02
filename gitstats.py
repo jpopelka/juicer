@@ -10,7 +10,7 @@ import datetime
 
 USER_TOKEN = os.getenv('GH_TOKEN')
 ISSUE_PROPS = ('created_at', 'closed_at', 'updated_at', 'id', 'pull_request', 'state')
-REPO_PROPS = ('watchers_count', 'forks_count', 'network_count')
+REPO_PROPS = ('forks_count', 'stargazers_count')
 THREE_MONTHS = PRG = ('/', '\\', '-')
 
 args = argparse.ArgumentParser()
@@ -62,7 +62,10 @@ def reducer((issues, issues_closed, prs, prs_closed), item):
   return (issues, issues_closed, prs, prs_closed)
 
 gh = github.Github(USER_TOKEN)
-repo = gh.get_repo(parsed.repo_name)
+try:
+  repo = gh.get_repo(parsed.repo_name)
+except github.GithubException:
+  sys.exit(0)
 
 number_of_commits = dict(last_year_commits=sum(get_last_years_commits(repo)))
 notoriety = get_repo_stats(repo)
