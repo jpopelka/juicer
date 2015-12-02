@@ -35,7 +35,7 @@ def get_last_years_commits(repo):
 def get_issues(repo, days, state='open'):
   issues, n = [], 0
   for x in repo.get_issues(since=datetime.datetime.now() - datetime.timedelta(days=days), state=state):
-    progress('Fetching issues ', n)
+    #progress('Fetching issues ', n)
     issues.append(dict(
       zip(ISSUE_PROPS, 
           [getattr(x, p) for p in ISSUE_PROPS])
