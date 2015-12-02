@@ -79,5 +79,11 @@ for FL in $(find ${DIR}/); do
     FMT="${FMT}$(printf '{"file": "%s", "digest": "sha256:%s", "type": "%s", "languages": %s, "traits": "%s"},\n' $(basename ${FL}) "$DGST" "${TYP}" "${LNGS}" "${TRAITS}")"
   fi
 done
-FMT="$(echo $FMT | sed 's/,$//g')\n]\n}}"
+GDATA=
+GIT=$(cat ${PKG_META} | (2>/dev/null jq '.repository.url // .repository'))
+if [[ ! -z "$GIT" ]]; then
+  GURL=$(echo $GIT | sed -e 's/\.git\"$//' -e 's/^.*:\/\/github\.com\///')
+  GDATA=", \"git\": $(./gitstats.py -d 14 ${GURL})"
+fi
+FMT="$(echo $FMT | sed 's/,$//g')\n]\n}${GDATA}}"
 echo -ne $FMT | jq .
