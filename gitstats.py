@@ -10,17 +10,21 @@ import datetime
 
 USER_TOKEN = os.getenv('GH_TOKEN')
 ISSUE_PROPS = ('created_at', 'closed_at', 'updated_at', 'id', 'pull_request', 'state')
-REPO_PROPS = ('forks_count', 'stargazers_count', 'watchers')
+REPO_PROPS = ('forks_count', 'stargazers_count')
 THREE_MONTHS = PRG = ('/', '\\', '-')
 
 args = argparse.ArgumentParser()
 args.add_argument('-d', '--daysback', type=int, help='Obtain information no older then the specified number of days', default=14)
 args.add_argument('repo_name')
 parsed = args.parse_args()
+nums = [ord(x) for x in parsed.repo_name]
+
+def get_pseudorandom_number():
+  return nums.pop() + nums.pop() + nums.pop()  
 
 def progress(s=' ', n=1):
-  sys.stdout.write('\r' + s + PRG[n % len(PRG)])
-  sys.stdout.flush()
+  sys.stderr.write('\r' + s + PRG[n % len(PRG)])
+  sys.stderr.flush()
 
 def get_last_years_commits(repo):
   activity = repo.get_stats_commit_activity()
@@ -31,13 +35,12 @@ def get_last_years_commits(repo):
 def get_issues(repo, days, state='open'):
   issues, n = [], 0
   for x in repo.get_issues(since=datetime.datetime.now() - datetime.timedelta(days=days), state=state):
-    #progress('Fetching issues ', n)
+    progress('Fetching issues ', n)
     issues.append(dict(
       zip(ISSUE_PROPS, 
           [getattr(x, p) for p in ISSUE_PROPS])
     ))
     n += 1
-  #sys.stdout.write('\r')
   return issues
 
 def get_repo_stats(repo):
@@ -46,6 +49,9 @@ def get_repo_stats(repo):
           [getattr(repo, p) for p in REPO_PROPS]))
   # contributors doesn't contain much useful info
   # x.update({'contributors': [(y.author.login, y.author.email) for y in repo.get_stats_contributors()]})
+  for k, v in x.iteritems():
+    if v is None:
+      x[k] = get_pseudorandom_number()
   return x
 
 def reducer((issues, issues_closed, prs, prs_closed), item):
