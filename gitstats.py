@@ -49,23 +49,25 @@ def get_repo_stats(repo):
           [getattr(repo, p) for p in REPO_PROPS]))
   # contributors doesn't contain much useful info
   # x.update({'contributors': [(y.author.login, y.author.email) for y in repo.get_stats_contributors()]})
-  for k, v in x.iteritems():
+  for k, v in x.items():
     if v is None:
       x[k] = get_pseudorandom_number()
   return x
 
-def reducer((issues, issues_closed, prs, prs_closed), item):
-  if item['pull_request']:
-    if item['state'] == "open":
-      prs.append(item)
+def classify_issues_prs(all_issues_prs):
+  issues = issues_closed = prs = prs_closed = []
+  for item in all_issues_prs:
+    if item['pull_request']:
+      if item['state'] == "open":
+        prs.append(item)
+      else:
+        prs_closed.append(item)
     else:
-      prs_closed.append(item)
-  else:
-    if item['state'] == "open":
-      issues.append(item)
-    else:
-      issues_closed.append(item)
-  return (issues, issues_closed, prs, prs_closed)
+      if item['state'] == "open":
+        issues.append(item)
+      else:
+        issues_closed.append(item)
+  return issues, issues_closed, prs, prs_closed
 
 gh = github.Github(USER_TOKEN)
 try:
@@ -78,7 +80,8 @@ notoriety = get_repo_stats(repo)
 
 all_issues_prs = get_issues(repo, parsed.daysback, 'all')
 
-issues_open, issues_closed, pull_requests_open, pull_requests_closed = reduce(reducer, all_issues_prs, ([], [], [], []))
+issues_open, issues_closed,\
+pull_requests_open, pull_requests_closed = classify_issues_prs(all_issues_prs)
 
 issues = dict(opened_issues=len(issues_open), closed_issues=len(issues_closed),
      opened_prs=len(pull_requests_open), closed_prs=len(pull_requests_closed))
