@@ -36,17 +36,12 @@ def get_issues(repo, days, state='open'):
   issues, n = [], 0
   for x in repo.get_issues(since=datetime.datetime.now() - datetime.timedelta(days=days), state=state):
     #progress('Fetching issues ', n)
-    issues.append(dict(
-      zip(ISSUE_PROPS, 
-          [getattr(x, p) for p in ISSUE_PROPS])
-    ))
+    issues.append({p: getattr(x, p) for p in ISSUE_PROPS})
     n += 1
   return issues
 
 def get_repo_stats(repo):
-  x = dict(
-      zip(REPO_PROPS, 
-          [getattr(repo, p) for p in REPO_PROPS]))
+  x = {p: getattr(repo, p) for p in REPO_PROPS}
   # contributors doesn't contain much useful info
   # x.update({'contributors': [(y.author.login, y.author.email) for y in repo.get_stats_contributors()]})
   for k, v in x.items():
