@@ -50,22 +50,13 @@ def get_repo_stats(repo):
 
 
 def classify_issues_prs(all_issues_prs):
-    issues = []
-    issues_closed = []
-    prs = []
-    prs_closed = []
+    ret = {'issues': {'open': [], 'closed': []},
+           'pull_requests': {'open': [], 'closed': []}}
     for item in all_issues_prs:
-        if item['pull_request']:
-            if item['state'] == "open":
-                prs.append(item)
-            else:
-                prs_closed.append(item)
-        else:
-            if item['state'] == "open":
-                issues.append(item)
-            else:
-                issues_closed.append(item)
-    return issues, issues_closed, prs, prs_closed
+        itype = 'pull_requests' if item['pull_request'] else 'issues'
+        state = item['state']
+        ret[itype][state].append(item)
+    return ret
 
 
 def run():
@@ -76,10 +67,13 @@ def run():
         sys.exit(0)
 
     all_issues_prs = get_issues(repo, parsed.daysback, 'all')
-    issues_open, issues_closed,\
-    pull_requests_open, pull_requests_closed = classify_issues_prs(all_issues_prs)
-    issues = {'issues': {'open': len(issues_open), 'closed': len(issues_closed)},
-              'pull_requests': {'open': len(pull_requests_open), 'closed': len(pull_requests_closed)}}
+    classified_issues_prs = classify_issues_prs(all_issues_prs)
+    n_issues_open = len(classified_issues_prs['issues']['open'])
+    n_issues_closed = len(classified_issues_prs['issues']['closed'])
+    n_pull_requests_open = len(classified_issues_prs['pull_requests']['open'])
+    n_pull_requests_closed = len(classified_issues_prs['pull_requests']['closed'])
+    issues = {'issues': {'open': n_issues_open, 'closed': n_issues_closed},
+              'pull_requests': {'open': n_pull_requests_open, 'closed': n_pull_requests_closed}}
 
     notoriety = get_repo_stats(repo)
     if notoriety:
