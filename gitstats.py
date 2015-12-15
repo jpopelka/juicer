@@ -79,7 +79,8 @@ def run():
     if notoriety:
         issues.update(notoriety)
     last_year_commits = get_last_years_commits(repo)
-    issues['last_year_commits'] = sum(last_year_commits)
+    commits = {'last_year_commits': {'sum': sum(last_year_commits), 'weekly': last_year_commits}}
+    issues.update(commits)
 
     print (json.dumps(issues))
 
