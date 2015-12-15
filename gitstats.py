@@ -50,7 +50,10 @@ def get_repo_stats(repo):
 
 
 def classify_issues_prs(all_issues_prs):
-    issues = issues_closed = prs = prs_closed = []
+    issues = []
+    issues_closed = []
+    prs = []
+    prs_closed = []
     for item in all_issues_prs:
         if item['pull_request']:
             if item['state'] == "open":
@@ -72,21 +75,17 @@ def run():
     except github.GithubException:
         sys.exit(0)
 
-    number_of_commits = dict(last_year_commits=sum(get_last_years_commits(repo)))
-    notoriety = get_repo_stats(repo)
-
     all_issues_prs = get_issues(repo, parsed.daysback, 'all')
-
     issues_open, issues_closed,\
     pull_requests_open, pull_requests_closed = classify_issues_prs(all_issues_prs)
+    issues = {'issues': {'open': len(issues_open), 'closed': len(issues_closed)},
+              'pull_requests': {'open': len(pull_requests_open), 'closed': len(pull_requests_closed)}}
 
-    issues = dict(opened_issues=len(issues_open), closed_issues=len(issues_closed),
-                  opened_prs=len(pull_requests_open), closed_prs=len(pull_requests_closed))
-
+    notoriety = get_repo_stats(repo)
     if notoriety:
         issues.update(notoriety)
-    if number_of_commits:
-        issues.update(number_of_commits)
+    last_year_commits = get_last_years_commits(repo)
+    issues['last_year_commits'] = sum(last_year_commits)
 
     print (json.dumps(issues))
 
