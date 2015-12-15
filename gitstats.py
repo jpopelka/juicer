@@ -46,13 +46,12 @@ def get_issues(repo, days, state='open'):
 
 
 def get_repo_stats(repo):
-    x = {p: getattr(repo, p) for p in REPO_PROPS}
+    d = {p: getattr(repo, p) or get_pseudorandom_number() for p in REPO_PROPS}
     # contributors doesn't contain much useful info
-    # x.update({'contributors': [(y.author.login, y.author.email) for y in repo.get_stats_contributors()]})
-    for k, v in x.items():
-        if v is None:
-            x[k] = get_pseudorandom_number()
-    return x
+    # contributors = repo.get_stats_contributors()
+    # if contributors:
+    #     d['contributors'] = [(y.author.login, y.author.email) for y in contributors]
+    return d
 
 
 def classify_issues_prs(all_issues_prs):
