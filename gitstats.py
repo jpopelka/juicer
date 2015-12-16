@@ -10,11 +10,11 @@ import datetime
 
 USER_TOKEN = os.getenv('GH_TOKEN')
 ISSUE_PROPS = ('created_at', 'closed_at', 'updated_at', 'id', 'pull_request', 'state')
-REPO_PROPS = ('forks_count', 'stargazers_count')
-THREE_MONTHS = PRG = ('/', '\\', '-')
+REPO_PROPS = ('forks_count', 'stargazers_count', 'open_issues_count')
+PRG = ('/', '\\', '-')
 
 args = argparse.ArgumentParser()
-args.add_argument('-d', '--daysback', type=int, help='Obtain information no older then the specified number of days', default=14)
+args.add_argument('-d', '--daysback', type=int, help='Obtain information (about updated issues & PRs) no older then the specified number of days', default=14)
 args.add_argument('repo_name')
 parsed = args.parse_args()
 
@@ -72,8 +72,8 @@ def run():
     n_issues_closed = len(classified_issues_prs['issues']['closed'])
     n_pull_requests_open = len(classified_issues_prs['pull_requests']['open'])
     n_pull_requests_closed = len(classified_issues_prs['pull_requests']['closed'])
-    issues = {'issues': {'open': n_issues_open, 'closed': n_issues_closed},
-              'pull_requests': {'open': n_pull_requests_open, 'closed': n_pull_requests_closed}}
+    issues = {'updated_issues': {'open': n_issues_open, 'closed': n_issues_closed},
+              'updated_pull_requests': {'open': n_pull_requests_open, 'closed': n_pull_requests_closed}}
 
     notoriety = get_repo_stats(repo)
     if notoriety:
@@ -86,7 +86,7 @@ def run():
     subscribers = repo.get_subscribers()
     issues['subscribers_count'] = len(list(subscribers))
 
-    print (json.dumps(issues))
+    json.dump(issues, sys.stdout)
 
 if __name__ == '__main__':
     run()
