@@ -78,9 +78,13 @@ def run():
     notoriety = get_repo_stats(repo)
     if notoriety:
         issues.update(notoriety)
+
     last_year_commits = get_last_years_commits(repo)
     commits = {'last_year_commits': {'sum': sum(last_year_commits), 'weekly': last_year_commits}}
     issues.update(commits)
+
+    subscribers = repo.get_subscribers()
+    issues['subscribers_count'] = len(list(subscribers))
 
     print (json.dumps(issues))
 
